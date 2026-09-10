@@ -1,6 +1,9 @@
-package io.github.carlosphenomenal;
+package io.github.carlosphenomenal.Products;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.carlosphenomenal.MomoMerchant;
+import io.github.carlosphenomenal.Dtos.PaymentStatus;
+import io.github.carlosphenomenal.Dtos.RequestToPayBody;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,7 +12,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-import java.util.Map;
 import java.util.UUID;
 
 @Getter

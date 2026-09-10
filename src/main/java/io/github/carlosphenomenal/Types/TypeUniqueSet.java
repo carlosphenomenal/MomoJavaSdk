@@ -1,4 +1,4 @@
-package io.github.carlosphenomenal;
+package io.github.carlosphenomenal.Types;
 
 import java.util.Collection;
 import java.util.Collections;

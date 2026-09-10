@@ -1,4 +1,4 @@
-package io.github.carlosphenomenal;
+package io.github.carlosphenomenal.Enums;
 
 import lombok.Getter;
 

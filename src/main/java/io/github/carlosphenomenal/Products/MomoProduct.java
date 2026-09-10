@@ -1,4 +1,4 @@
-package io.github.carlosphenomenal;
+package io.github.carlosphenomenal.Products;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

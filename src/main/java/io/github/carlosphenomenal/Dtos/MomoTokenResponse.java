@@ -1,4 +1,4 @@
-package io.github.carlosphenomenal;
+package io.github.carlosphenomenal.Dtos;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

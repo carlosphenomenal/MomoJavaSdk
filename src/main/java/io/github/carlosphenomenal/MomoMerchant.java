@@ -2,17 +2,21 @@ package io.github.carlosphenomenal;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.carlosphenomenal.Dtos.MomoTokenResponse;
+import io.github.carlosphenomenal.Dtos.PaymentRequest;
+import io.github.carlosphenomenal.Dtos.PaymentStatus;
+import io.github.carlosphenomenal.Dtos.RequestToPayBody;
+import io.github.carlosphenomenal.Enums.TargetEnvironment;
+import io.github.carlosphenomenal.Products.MomoCollections;
+import io.github.carlosphenomenal.Products.MomoProduct;
+import io.github.carlosphenomenal.Provisioners.AccessTokenProvisioner;
+import io.github.carlosphenomenal.Provisioners.SandboxProvisioner;
+import io.github.carlosphenomenal.Types.TypeUniqueSet;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -163,6 +167,14 @@ public class MomoMerchant {
     private String resolvePartyCode(String partyCode){
         // TODO: Implement party code resolution
         return partyCode;
+    }
+
+
+    //================= Records ===========================
+    public record CachedToken(String token, Instant expiresAt) {
+        boolean isExpired() {
+            return Instant.now().isAfter(expiresAt);
+        }
     }
 
 

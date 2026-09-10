@@ -1,5 +1,6 @@
-package io.github.carlosphenomenal;
+package io.github.carlosphenomenal.Dtos;
 
+import io.github.carlosphenomenal.Enums.PartyIdType;
 import lombok.*;
 
 @Getter
