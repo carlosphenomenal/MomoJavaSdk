@@ -21,6 +21,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * The primary entry point for the MTN MoMo SDK.
+ * This class handles authentication, token caching, and provides methods to interact with various MoMo products.
+ *
+ * @author Carlos Amanya
+ */
 @Getter
 @Builder
 public class MomoMerchant {
@@ -34,8 +40,18 @@ public class MomoMerchant {
     static HttpClient httpClient = HttpClient.newHttpClient();
     static ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Builder for {@link MomoMerchant}.
+     */
     public static class MomoMerchantBuilder {
 
+        /**
+         * Builds a {@link MomoMerchant} instance.
+         * For {@link TargetEnvironment#SANDBOX}, if apiUser or apiKey are not provided, they will be automatically provisioned.
+         *
+         * @return a new {@link MomoMerchant} instance
+         * @throws IllegalArgumentException if required fields are missing
+         */
         public MomoMerchant build() {
 
             Objects.requireNonNull(targetEnvironment, "Target environment must not be null");
@@ -66,6 +82,13 @@ public class MomoMerchant {
         }
     }
 
+    /**
+     * Gets a valid access token for the specified MoMo product.
+     * Uses a cached token if it's still valid, otherwise fetches a new one.
+     *
+     * @param product the MoMo product to get the token for
+     * @return a valid access token
+     */
     public String getAccessToken(MomoProduct product) {
         CachedToken existing = tokenCache.get(product);
         if (existing != null && !existing.isExpired()) {
@@ -81,6 +104,14 @@ public class MomoMerchant {
         return response.accessToken();
     }
 
+    /**
+     * Initiates a request to pay from a client.
+     *
+     * @param paymentRequest the payment request details
+     * @param referenceId    a unique UUID for this transaction
+     * @return the referenceId if successful
+     * @throws IllegalArgumentException if the Collections product is not available
+     */
     public String requestClientToPay(PaymentRequest paymentRequest, String referenceId) {
         RequestToPayBody requestToPayBody = RequestToPayBody.builder()
                 .amount(paymentRequest.getAmount())
@@ -98,6 +129,13 @@ public class MomoMerchant {
         return momoCollections.requestToPay(this, httpClient, objectMapper, requestToPayBody, referenceId);
     }
 
+    /**
+     * Checks the status of a payment request.
+     *
+     * @param referenceId the unique UUID of the transaction to check
+     * @return the {@link PaymentStatus} of the transaction
+     * @throws IllegalArgumentException if the Collections product is not available
+     */
     public PaymentStatus checkPaymentStatus(String referenceId) {
         MomoCollections momoCollections = products.get(MomoCollections.class);
         if (momoCollections == null) {

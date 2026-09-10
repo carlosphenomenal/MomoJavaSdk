@@ -6,6 +6,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Represents the status of a payment transaction.
+ *
+ * @author Carlos Amanya
+ */
 @Data
 @Builder
 @NoArgsConstructor

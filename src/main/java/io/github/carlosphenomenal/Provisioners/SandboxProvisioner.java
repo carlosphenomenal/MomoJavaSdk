@@ -9,6 +9,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 
+/**
+ * Internal class for provisioning API users and keys in the MTN MoMo Sandbox environment.
+ *
+ * @author Carlos Amanya
+ */
 public class SandboxProvisioner {
 
     static ObjectMapper objectMapper = new ObjectMapper();

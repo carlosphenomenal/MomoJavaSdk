@@ -31,6 +31,7 @@ import java.util.Map;
  * <p>{@code null} elements are not permitted.
  *
  * @param <T> the upper bound type for elements stored in this set
+ * @author Carlos Amanya
  */
 public class TypeUniqueSet<T> implements Iterable<T> {
 

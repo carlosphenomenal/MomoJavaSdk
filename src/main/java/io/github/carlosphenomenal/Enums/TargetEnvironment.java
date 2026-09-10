@@ -2,6 +2,12 @@ package io.github.carlosphenomenal.Enums;
 
 import lombok.Getter;
 
+/**
+ * Enumeration of supported target environments for the MTN MoMo API.
+ * Each environment defines its base URL, environment code, currency, and country code.
+ *
+ * @author Carlos Amanya
+ */
 @Getter
 public enum TargetEnvironment {
     SANDBOX("sandbox", "https://sandbox.momodeveloper.mtn.com", "EUR", null),

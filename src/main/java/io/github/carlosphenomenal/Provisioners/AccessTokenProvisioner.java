@@ -15,6 +15,11 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+/**
+ * Internal class for provisioning access tokens from the MTN MoMo API.
+ *
+ * @author Carlos Amanya
+ */
 public class AccessTokenProvisioner {
 
     static ObjectMapper objectMapper = new ObjectMapper();

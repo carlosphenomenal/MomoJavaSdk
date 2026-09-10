@@ -1,6 +1,8 @@
 plugins {
-    id 'java'
+    id 'java-library'
     id 'io.freefair.lombok' version '8.6'
+    id 'signing'
+    id 'com.vanniktech.maven.publish' version '0.37.0'
 }
 
 group = 'io.github.carlosphenomenal'
@@ -14,12 +16,44 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:6.0.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    // Jackson
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
-    // SLF4J
     implementation 'org.slf4j:slf4j-api:2.0.12'
-    // Logback
     implementation 'ch.qos.logback:logback-classic:1.5.3'
+}
+
+signing {
+    useGpgCmd()
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+
+    coordinates("io.github.carlosphenomenal", "mtn-momo-sdk", version.toString())
+
+    pom {
+        name = 'MTN MoMo SDK'
+        description = 'A Java SDK for the MTN MoMo API'
+        url = 'https://github.com/carlosphenomenal/mtn-momo-sdk'
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+        }
+        developers {
+            developer {
+                id = 'carlosphenomenal'
+                name = 'Carlos Amanya'
+                email = 'carlosphenomenal20@gmail.com'
+            }
+        }
+        scm {
+            connection = 'scm:git:git://github.com/carlosphenomenal/mtn-momo-sdk.git'
+            developerConnection = 'scm:git:ssh://github.com/carlosphenomenal/mtn-momo-sdk.git'
+            url = 'https://github.com/carlosphenomenal/mtn-momo-sdk'
+        }
+    }
 }
 
 test {

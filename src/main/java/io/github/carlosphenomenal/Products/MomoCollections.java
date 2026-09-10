@@ -14,6 +14,11 @@ import java.net.http.HttpResponse;
 
 import java.util.UUID;
 
+/**
+ * Implementation of the MTN MoMo Collections product.
+ *
+ * @author Carlos Amanya
+ */
 @Getter
 @Slf4j
 public class MomoCollections extends MomoProduct {

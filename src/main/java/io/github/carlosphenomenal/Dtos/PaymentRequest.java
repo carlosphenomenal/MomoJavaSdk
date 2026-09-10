@@ -3,6 +3,11 @@ package io.github.carlosphenomenal.Dtos;
 import io.github.carlosphenomenal.Enums.PartyIdType;
 import lombok.*;
 
+/**
+ * Represents a payment request from a client.
+ *
+ * @author Carlos Amanya
+ */
 @Getter
 @Builder
 public class PaymentRequest {
