@@ -9,8 +9,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 @Getter
-public class Collections extends MomoProduct {
-    public Collections(String subscriptionKey) {
+public class MomoCollections extends MomoProduct {
+    public MomoCollections(String subscriptionKey) {
         super(subscriptionKey);
         if (subscriptionKey == null || subscriptionKey.isEmpty()) {
             throw new IllegalArgumentException("Subscription key cannot be null or empty");

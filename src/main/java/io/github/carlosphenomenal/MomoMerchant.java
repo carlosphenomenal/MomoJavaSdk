@@ -15,7 +15,6 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
@@ -88,11 +87,11 @@ public class MomoMerchant {
                 .payeeNote(paymentRequest.getPayeeNote())
                 .build();
 
-        Collections collections = products.get(Collections.class);
-        if (collections == null) {
+        MomoCollections momoCollections = products.get(MomoCollections.class);
+        if (momoCollections == null) {
             throw new IllegalArgumentException("No Collections product available");
         }
-        return collections.requestToPay(this, httpClient, objectMapper, requestToPayBody, referenceId);
+        return momoCollections.requestToPay(this, httpClient, objectMapper, requestToPayBody, referenceId);
     }
 
     private String resolvePartyId(PaymentRequest.Payer payer) {
@@ -157,9 +156,9 @@ public class MomoMerchant {
 
     private MomoTokenResponse fetchNewToken(MomoProduct product) {
         String contextPath;
-        if (product instanceof Disbursement) {
+        if (product instanceof MomoDisbursement) {
             contextPath = "disbursement";
-        } else if (product instanceof Collections) {
+        } else if (product instanceof MomoCollections) {
             contextPath = "collection";
         } else {
             throw new IllegalArgumentException("Unsupported product type: " + product.getClass().getSimpleName());
