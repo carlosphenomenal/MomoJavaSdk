@@ -24,7 +24,7 @@ public class MomoMerchant {
     private final TargetEnvironment targetEnvironment;
     private final String apiUser;
     private final String apiKey;
-    private final Set<MomoProduct> products;
+    private final TypeUniqueSet<MomoProduct> products;
 
     private final Map<MomoProduct, CachedToken> tokenCache = new ConcurrentHashMap<>();
     static HttpClient httpClient = HttpClient.newHttpClient();
@@ -88,11 +88,10 @@ public class MomoMerchant {
                 .payeeNote(paymentRequest.getPayeeNote())
                 .build();
 
-        Collections collections = products.stream()
-                .filter(p -> p instanceof Collections)
-                .findFirst()
-                .map(p -> (Collections) p)
-                .orElseThrow(() -> new IllegalArgumentException("No Collections product available"));
+        Collections collections = products.get(Collections.class);
+        if (collections == null) {
+            throw new IllegalArgumentException("No Collections product available");
+        }
         return collections.requestToPay(this, httpClient, objectMapper, requestToPayBody, referenceId);
     }
 
