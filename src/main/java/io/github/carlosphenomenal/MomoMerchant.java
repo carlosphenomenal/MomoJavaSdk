@@ -47,7 +47,8 @@ public class MomoMerchant {
 
         /**
          * Builds a {@link MomoMerchant} instance.
-         * For {@link TargetEnvironment#SANDBOX}, if apiUser or apiKey are not provided, they will be automatically provisioned.
+         * For {@link TargetEnvironment#SANDBOX}, if the apiKey is not provided, it will be automatically provisioned.
+         * The apiUser must always be provided.
          *
          * @return a new {@link MomoMerchant} instance
          * @throws IllegalArgumentException if required fields are missing
@@ -66,11 +67,6 @@ public class MomoMerchant {
 
             if (products == null || products.isEmpty()) {
                 throw new IllegalArgumentException("Products set must not be null or empty");
-            }
-
-            if (targetEnvironment == TargetEnvironment.SANDBOX && apiUser == null) {
-                String subscriptionKey = products.iterator().next().getSubscriptionKey();
-                this.apiUser = SandboxProvisioner.createApiUser(httpClient, subscriptionKey);
             }
 
             if (targetEnvironment == TargetEnvironment.SANDBOX && apiKey == null) {
