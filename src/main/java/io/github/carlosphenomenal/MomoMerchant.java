@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Getter
 @Builder
 public class MomoMerchant {
+
     private final TargetEnvironment targetEnvironment;
     private final String apiUser;
     private final String apiKey;
@@ -50,12 +51,12 @@ public class MomoMerchant {
 
             if (targetEnvironment == TargetEnvironment.SANDBOX && apiUser == null) {
                 String subscriptionKey = products.iterator().next().getSubscriptionKey();
-                this.apiUser = createApiUser(subscriptionKey);
+                this.apiUser = SandboxProvisioner.createApiUser(httpClient, subscriptionKey);
             }
 
             if (targetEnvironment == TargetEnvironment.SANDBOX && apiKey == null) {
                 String subscriptionKey = products.iterator().next().getSubscriptionKey();
-                this.apiKey = generateApiKey(this.apiUser, subscriptionKey);
+                this.apiKey = SandboxProvisioner.generateApiKey(httpClient, apiUser, subscriptionKey);
             }
 
             return new MomoMerchant(targetEnvironment, apiUser, apiKey, products);
@@ -68,7 +69,7 @@ public class MomoMerchant {
             return existing.token();
         }
 
-        MomoTokenResponse response = fetchNewToken(product);
+        MomoTokenResponse response = AccessTokenProvisioner.fetchNewToken(httpClient, product, targetEnvironment, apiUser, apiKey);
 
         Instant refreshAt = Instant.now().plusSeconds(Math.max(0, response.expiresIn() - 60));
         CachedToken newToken = new CachedToken(response.accessToken(), refreshAt);
@@ -93,6 +94,9 @@ public class MomoMerchant {
         }
         return momoCollections.requestToPay(this, httpClient, objectMapper, requestToPayBody, referenceId);
     }
+
+
+    //================ HELPER METHODS  ======================
 
     private String resolvePartyId(PaymentRequest.Payer payer) {
         return switch (payer.getPartyIdType()) {
@@ -154,132 +158,7 @@ public class MomoMerchant {
         return partyCode;
     }
 
-    private MomoTokenResponse fetchNewToken(MomoProduct product) {
-        String contextPath;
-        if (product instanceof MomoDisbursement) {
-            contextPath = "disbursement";
-        } else if (product instanceof MomoCollections) {
-            contextPath = "collection";
-        } else {
-            throw new IllegalArgumentException("Unsupported product type: " + product.getClass().getSimpleName());
-        }
 
-        String url = this.targetEnvironment.getBaseUrl() + "/" + contextPath + "/token/";
 
-        try {
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-
-                    .header("Authorization", "Basic " + basicAuth(this.apiUser, this.apiKey))
-                    .header("Ocp-Apim-Subscription-Key", product.getSubscriptionKey())
-                    .header("Content-Type", "application/json")
-
-                    .POST(HttpRequest.BodyPublishers.noBody())
-                    .build();
-
-            HttpResponse<String> response =
-                    httpClient.send(
-                            request,
-                            HttpResponse.BodyHandlers.ofString()
-                    );
-
-            int statusCode = response.statusCode();
-
-            if (statusCode < 200 || statusCode >= 300) {
-
-                throw new RuntimeException(
-                        "Failed to retrieve MoMo access token for "
-                                + product
-                                + ". HTTP status: "
-                                + statusCode
-                                + ". Response: "
-                                + response.body()
-                );
-            }
-
-            return objectMapper.readValue(
-                    response.body(),
-                    MomoTokenResponse.class
-            );
-
-        } catch (IOException | InterruptedException e) {
-
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-
-            throw new RuntimeException(
-                    "Failed to retrieve MoMo access token for "
-                            + product
-                            + ": "
-                            + e.getMessage(),
-                    e
-            );
-        }
-    }
-
-    private static String createApiUser(String subscriptionKey) {
-        String url = "https://sandbox.momodeveloper.mtn.com/v1_0/apiuser";
-        String referenceId = java.util.UUID.randomUUID().toString();
-
-        try {
-            String jsonBody = objectMapper.writeValueAsString(
-                    Map.of("providerCallbackHost", "example.com")
-            );
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("X-Reference-Id", referenceId)
-                    .header("Ocp-Apim-Subscription-Key", subscriptionKey)
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 201) {
-                throw new RuntimeException("Failed to create Sandbox API User. Status: "
-                        + response.statusCode() + ", Body: " + response.body());
-            }
-            return referenceId;
-        } catch (IOException | InterruptedException e) {
-            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-            throw new RuntimeException("Error creating Sandbox API User: " + e.getMessage(), e);
-        }
-    }
-
-    private static String generateApiKey(String apiUser, String subscriptionKey) {
-        String url = "https://sandbox.momodeveloper.mtn.com/v1_0/apiuser/" + apiUser + "/apikey";
-
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Ocp-Apim-Subscription-Key", subscriptionKey)
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.noBody())
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 201 && response.statusCode() != 200) {
-                throw new RuntimeException("Failed to generate Sandbox API Key. Status: "
-                        + response.statusCode() + ", Body: " + response.body());
-            }
-
-            ApiKeyResponse keyResponse = objectMapper.readValue(response.body(), ApiKeyResponse.class);
-            return keyResponse.apiKey();
-
-        } catch (IOException | InterruptedException e) {
-            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-            throw new RuntimeException("Error generating Sandbox API Key: " + e.getMessage(), e);
-        }
-    }
-
-    private static String basicAuth(String user, String key) {
-        return Base64.getEncoder().encodeToString((user + ":" + key).getBytes(StandardCharsets.UTF_8));
-    }
-
-    private record ApiKeyResponse(String apiKey) {}
 
 }

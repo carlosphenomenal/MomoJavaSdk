@@ -35,6 +35,54 @@ import java.util.Map;
 public class TypeUniqueSet<T> implements Iterable<T> {
 
     private final Map<Class<? extends T>, T> map = new HashMap<>();
+    private boolean immutable = false;
+
+    /**
+     * Creates an immutable {@code TypeUniqueSet} containing the given
+     * elements.
+     *
+     * <p>Each element is keyed by its exact runtime type, exactly as with
+     * {@link #add(Object)}. The returned set cannot be modified afterwards:
+     * calls to {@link #add(Object)}, {@link #remove(Object)},
+     * {@link #remove(Class)}, or {@link #clear()} will throw
+     * {@link UnsupportedOperationException}.
+     *
+     * @param elements the elements to populate the set with; must not
+     *                  contain {@code null}, and must not contain two
+     *                  elements of the same exact runtime type
+     * @param <T> the upper bound type for elements stored in the set
+     * @return an immutable {@code TypeUniqueSet} containing the given
+     *         elements
+     * @throws IllegalArgumentException if {@code elements} contains
+     *         {@code null}, or contains two elements of the same exact
+     *         runtime type
+     */
+    @SafeVarargs
+    public static <T> TypeUniqueSet<T> of(T... elements) {
+        TypeUniqueSet<T> set = new TypeUniqueSet<>();
+        for (T element : elements) {
+            if (element == null) {
+                throw new IllegalArgumentException("TypeUniqueSet.of(...) does not permit null elements");
+            }
+            if (!set.add(element)) {
+                throw new IllegalArgumentException(
+                        "TypeUniqueSet.of(...) received more than one element of type "
+                                + element.getClass().getName());
+            }
+        }
+        set.immutable = true;
+        return set;
+    }
+
+    /**
+     * Throws {@link UnsupportedOperationException} if this set was created
+     * via {@link #of(Object[])} and is therefore immutable.
+     */
+    private void checkMutable() {
+        if (immutable) {
+            throw new UnsupportedOperationException("This TypeUniqueSet is immutable");
+        }
+    }
 
     /**
      * Adds the given element to this set, keyed by its exact runtime type.
@@ -48,8 +96,11 @@ public class TypeUniqueSet<T> implements Iterable<T> {
      *         (i.e. the element was added); {@code false} if an element of
      *         this exact type already existed, or if {@code element} is
      *         {@code null}
+     * @throws UnsupportedOperationException if this set is immutable (see
+     *         {@link #of(Object[])})
      */
     public boolean add(T element) {
+        checkMutable();
         if (element == null) return false;
 
         @SuppressWarnings("unchecked")
@@ -64,8 +115,11 @@ public class TypeUniqueSet<T> implements Iterable<T> {
      * @param type the exact type of the element to remove
      * @return the removed element, or {@code null} if no element of that
      *         type was present
+     * @throws UnsupportedOperationException if this set is immutable (see
+     *         {@link #of(Object[])})
      */
     public T remove(Class<? extends T> type) {
+        checkMutable();
         return map.remove(type);
     }
 
@@ -81,8 +135,11 @@ public class TypeUniqueSet<T> implements Iterable<T> {
      * @param element the element to remove; {@code null} is ignored
      * @return {@code true} if an element of this element's runtime type was
      *         present and was removed
+     * @throws UnsupportedOperationException if this set is immutable (see
+     *         {@link #of(Object[])})
      */
     public boolean remove(T element) {
+        checkMutable();
         if (element == null) return false;
 
         @SuppressWarnings("unchecked")
@@ -147,8 +204,12 @@ public class TypeUniqueSet<T> implements Iterable<T> {
 
     /**
      * Removes all elements from this set.
+     *
+     * @throws UnsupportedOperationException if this set is immutable (see
+     *         {@link #of(Object[])})
      */
     public void clear() {
+        checkMutable();
         map.clear();
     }
 
@@ -159,6 +220,16 @@ public class TypeUniqueSet<T> implements Iterable<T> {
      */
     public Collection<T> values() {
         return Collections.unmodifiableCollection(map.values());
+    }
+
+    /**
+     * Returns a sequential {@link java.util.stream.Stream} over the
+     * elements in this set.
+     *
+     * @return a stream of the elements currently stored
+     */
+    public java.util.stream.Stream<T> stream() {
+        return values().stream();
     }
 
     /**
