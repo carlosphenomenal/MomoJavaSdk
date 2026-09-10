@@ -35,11 +35,10 @@ public class MomoMerchant {
         public MomoMerchant build() {
 
             Objects.requireNonNull(targetEnvironment, "Target environment must not be null");
+            Objects.requireNonNull(apiUser, "API user must not be null");
 
             if (targetEnvironment != TargetEnvironment.SANDBOX) {
-                if (apiUser == null || apiUser.isBlank()) {
-                    throw new IllegalArgumentException("An apiUser is required for non-sandbox environments");
-                }
+
                 if (apiKey == null || apiKey.isBlank()) {
                     throw new IllegalArgumentException("An apiKey is required for non-sandbox environments");
                 }
@@ -93,6 +92,14 @@ public class MomoMerchant {
             throw new IllegalArgumentException("No Collections product available");
         }
         return momoCollections.requestToPay(this, httpClient, objectMapper, requestToPayBody, referenceId);
+    }
+
+    public PaymentStatus checkPaymentStatus(String referenceId) {
+        MomoCollections momoCollections = products.get(MomoCollections.class);
+        if (momoCollections == null) {
+            throw new IllegalArgumentException("No Collections product available");
+        }
+        return momoCollections.checkPaymentStatus(this, httpClient, objectMapper, referenceId);
     }
 
 
