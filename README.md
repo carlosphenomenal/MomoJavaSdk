@@ -7,7 +7,7 @@ A Java SDK for integrating with the MTN Mobile Money (MoMo) API. This SDK simpli
 - **Token Management**: Automatically handles access token retrieval and caching.
 - **Utility Methods**: Helper methods to manually generate API users, API keys, and access tokens.
 - **Easy-to-use API**: Simplified methods for common operations like `requestToPay` and `refund`.
-- **Environment Support**: Pre-configured for Sandbox and MTN Uganda.
+- **Environment Support**: Pre-configured for Sandbox and MTN Uganda. (Note: Currently supports Uganda only; more countries coming soon).
 
 ---
 
@@ -205,6 +205,8 @@ System.out.println("Access Token: " + tokenResponse.getAccessToken());
 ---
 
 ## Supported Environments
+
+> **Note:** The SDK is currently optimized and tested for **MTN Uganda**. Support for other MTN MoMo operating countries (Ghana, Ivory Coast, Zambia, etc.) is planned for future releases.
 
 | Environment | Base URL | Currency | Country Code |
 | :--- | :--- | :--- | :--- |
