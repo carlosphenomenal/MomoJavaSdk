@@ -2,12 +2,10 @@ package io.github.carlosphenomenal;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.carlosphenomenal.Dtos.MomoTokenResponse;
-import io.github.carlosphenomenal.Dtos.PaymentRequest;
-import io.github.carlosphenomenal.Dtos.PaymentStatus;
-import io.github.carlosphenomenal.Dtos.RequestToPayBody;
+import io.github.carlosphenomenal.Dtos.*;
 import io.github.carlosphenomenal.Enums.TargetEnvironment;
 import io.github.carlosphenomenal.Products.MomoCollections;
+import io.github.carlosphenomenal.Products.MomoDisbursement;
 import io.github.carlosphenomenal.Products.MomoProduct;
 import io.github.carlosphenomenal.Provisioners.AccessTokenProvisioner;
 import io.github.carlosphenomenal.Provisioners.SandboxProvisioner;
@@ -138,6 +136,46 @@ public class MomoMerchant {
             throw new IllegalArgumentException("No Collections product available");
         }
         return momoCollections.checkPaymentStatus(this, httpClient, objectMapper, referenceId);
+    }
+
+    /**
+     * Initiates a refund for a previous transaction.
+     *
+     * @param refundRequest the refund details
+     * @param referenceId   a unique UUID for this refund transaction
+     * @return the referenceId if successful
+     * @throws IllegalArgumentException if the Disbursement product is not available
+     */
+    public String refund(RefundRequest refundRequest, String referenceId) {
+        RefundBody refundBody = RefundBody.builder()
+                .amount(refundRequest.getAmount())
+                .currency(this.targetEnvironment.getCurrency())
+                .externalId(refundRequest.getExternalId())
+                .payerMessage(refundRequest.getPayerMessage())
+                .payeeNote(refundRequest.getPayeeNote())
+                .referenceIdToRefund(refundRequest.getReferenceIdToRefund())
+                .build();
+
+        MomoDisbursement momoDisbursement = products.get(MomoDisbursement.class);
+        if (momoDisbursement == null) {
+            throw new IllegalArgumentException("No Disbursement product available");
+        }
+        return momoDisbursement.refund(this, httpClient, objectMapper, refundBody, referenceId);
+    }
+
+    /**
+     * Checks the status of a refund request.
+     *
+     * @param referenceId the unique UUID of the refund transaction to check
+     * @return the {@link RefundStatus} of the refund transaction
+     * @throws IllegalArgumentException if the Disbursement product is not available
+     */
+    public RefundStatus checkRefundStatus(String referenceId) {
+        MomoDisbursement momoDisbursement = products.get(MomoDisbursement.class);
+        if (momoDisbursement == null) {
+            throw new IllegalArgumentException("No Disbursement product available");
+        }
+        return momoDisbursement.checkRefundStatus(this, httpClient, objectMapper, referenceId);
     }
 
 
