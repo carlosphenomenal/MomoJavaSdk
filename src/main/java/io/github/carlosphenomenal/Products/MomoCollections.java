@@ -101,6 +101,7 @@ public class MomoCollections extends MomoProduct {
      * @param objectMapper the ObjectMapper for JSON deserialization
      * @return the {@link BalanceResponse}
      */
+    @Override
     public BalanceResponse getAccountBalance(MomoMerchant momoMerchant, HttpClient httpClient, ObjectMapper objectMapper) {
 
         try {

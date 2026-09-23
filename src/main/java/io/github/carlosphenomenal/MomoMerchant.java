@@ -196,21 +196,82 @@ public class MomoMerchant {
     }
 
     /**
-     * Gets the account balance.
+     * Initiates a transfer to a payee.
+     *
+     * @param transferRequest the transfer details
+     * @param referenceId     a unique UUID for this transfer transaction
+     * @return the referenceId if successful
+     * @throws IllegalArgumentException if the Disbursement product is not available
+     */
+    public String transfer(TransferRequest transferRequest, String referenceId) {
+        TransferBody transferBody = TransferBody.builder()
+                .amount(transferRequest.getAmount())
+                .currency(this.targetEnvironment.getCurrency())
+                .externalId(transferRequest.getExternalId())
+                .payee(new TransferBody.Payee(transferRequest.getPayee().getPartyIdType(), this.resolveTransferPartyId(transferRequest.getPayee())))
+                .payerMessage(transferRequest.getPayerMessage())
+                .payeeNote(transferRequest.getPayeeNote())
+                .build();
+
+        MomoDisbursement momoDisbursement = products.get(MomoDisbursement.class);
+        if (momoDisbursement == null) {
+            throw new IllegalArgumentException("No Disbursement product available");
+        }
+        return momoDisbursement.transfer(this, httpClient, objectMapper, transferBody, referenceId);
+    }
+
+    /**
+     * Checks the status of a transfer request.
+     *
+     * @param referenceId the unique UUID of the transfer transaction to check
+     * @return the {@link TransferStatus} of the transfer transaction
+     * @throws IllegalArgumentException if the Disbursement product is not available
+     */
+    public TransferStatus checkTransferStatus(String referenceId) {
+        MomoDisbursement momoDisbursement = products.get(MomoDisbursement.class);
+        if (momoDisbursement == null) {
+            throw new IllegalArgumentException("No Disbursement product available");
+        }
+        return momoDisbursement.checkTransferStatus(this, httpClient, objectMapper, referenceId);
+    }
+
+    /**
+     * Gets the account balance for the Collections product.
      *
      * @return the {@link BalanceResponse}
      * @throws IllegalArgumentException if the Collections product is not available
      */
     public BalanceResponse getAccountBalance() {
-        MomoCollections momoCollections = products.get(MomoCollections.class);
-        if (momoCollections == null) {
-            throw new IllegalArgumentException("No Collections product available");
+        return getAccountBalance(MomoCollections.class);
+    }
+
+    /**
+     * Gets the account balance for a specific product.
+     *
+     * @param productClass the class of the MoMo product to get the balance for
+     * @param <T>          the type of the MoMo product
+     * @return the {@link BalanceResponse}
+     * @throws IllegalArgumentException if the product is not available or does not support balance checks
+     */
+    public <T extends MomoProduct> BalanceResponse getAccountBalance(Class<T> productClass) {
+        T product = products.get(productClass);
+        if (product == null) {
+            throw new IllegalArgumentException("Product " + productClass.getSimpleName() + " not available");
         }
-        return momoCollections.getAccountBalance(this, httpClient, objectMapper);
+        return product.getAccountBalance(this, httpClient, objectMapper);
     }
 
 
     //================ HELPER METHODS  ======================
+
+    private String resolveTransferPartyId(TransferRequest.Payee payee) {
+        return switch (payee.getPartyIdType()) {
+            case MSISDN -> resolveMsisdn(payee.getPartyId());
+            case EMAIL -> resolveEmail(payee.getPartyId());
+            case PARTY_CODE -> resolvePartyCode(payee.getPartyId());
+            case null -> throw new IllegalArgumentException("PartyIdType cannot be null.");
+        };
+    }
 
     private String resolvePartyId(PaymentRequest.Payer payer) {
         return switch (payer.getPartyIdType()) {
@@ -276,7 +337,7 @@ public class MomoMerchant {
     //================= Records ===========================
     public record CachedToken(String token, Instant expiresAt) {
         boolean isExpired() {
-            return Instant.now().isAfter(expiresAt);
+            return !Instant.now().isAfter(expiresAt);
         }
     }
 
