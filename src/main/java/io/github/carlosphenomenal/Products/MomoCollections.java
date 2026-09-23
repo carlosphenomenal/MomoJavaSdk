@@ -2,6 +2,7 @@ package io.github.carlosphenomenal.Products;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.carlosphenomenal.MomoMerchant;
+import io.github.carlosphenomenal.Dtos.BalanceResponse;
 import io.github.carlosphenomenal.Dtos.PaymentStatus;
 import io.github.carlosphenomenal.Dtos.RequestToPayBody;
 import lombok.Getter;
@@ -89,6 +90,43 @@ public class MomoCollections extends MomoProduct {
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to check payment status", e);
+        }
+    }
+
+    /**
+     * Gets the account balance.
+     *
+     * @param momoMerchant the MomoMerchant instance
+     * @param httpClient   the HttpClient to use
+     * @param objectMapper the ObjectMapper for JSON deserialization
+     * @return the {@link BalanceResponse}
+     */
+    public BalanceResponse getAccountBalance(MomoMerchant momoMerchant, HttpClient httpClient, ObjectMapper objectMapper) {
+
+        try {
+            String accessToken = momoMerchant.getAccessToken(this);
+            String baseUrl = momoMerchant.getTargetEnvironment().getBaseUrl();
+            String url = baseUrl + "/collection/v1_0/account/balance";
+
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("X-Target-Environment", momoMerchant.getTargetEnvironment().getEnvironmentCode())
+                    .header("Ocp-Apim-Subscription-Key", this.getSubscriptionKey())
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(response.body(), BalanceResponse.class);
+            } else {
+                throw new RuntimeException("Get account balance failed with HTTP status: " + response.statusCode() + ", Body: " + response.body());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get account balance", e);
         }
     }
 }

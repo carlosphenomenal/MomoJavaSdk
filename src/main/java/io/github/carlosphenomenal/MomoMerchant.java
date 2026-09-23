@@ -14,6 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.net.http.HttpClient;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -35,7 +36,10 @@ public class MomoMerchant {
     private final TypeUniqueSet<MomoProduct> products;
 
     private final Map<MomoProduct, CachedToken> tokenCache = new ConcurrentHashMap<>();
-    static HttpClient httpClient = HttpClient.newHttpClient();
+    static HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofSeconds(20))
+            .build();
     static ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -84,18 +88,31 @@ public class MomoMerchant {
      * @return a valid access token
      */
     public String getAccessToken(MomoProduct product) {
+
         CachedToken existing = tokenCache.get(product);
+
         if (existing != null && !existing.isExpired()) {
             return existing.token();
         }
 
-        MomoTokenResponse response = AccessTokenProvisioner.fetchNewToken(httpClient, product, targetEnvironment, apiUser, apiKey);
+        synchronized (tokenCache) {
 
-        Instant refreshAt = Instant.now().plusSeconds(Math.max(0, response.expiresIn() - 60));
-        CachedToken newToken = new CachedToken(response.accessToken(), refreshAt);
+            existing = tokenCache.get(product);
 
-        tokenCache.put(product, newToken);
-        return response.accessToken();
+            if (existing != null && !existing.isExpired()) {
+                return existing.token();
+            }
+
+            MomoTokenResponse response = AccessTokenProvisioner.fetchNewToken(httpClient, product, targetEnvironment, apiUser, apiKey);
+
+            Instant refreshAt = Instant.now().plusSeconds(Math.max(0, response.expiresIn() - 60));
+
+            CachedToken newToken = new CachedToken(response.accessToken(), refreshAt);
+
+            tokenCache.put(product, newToken);
+
+            return newToken.token();
+        }
     }
 
     /**
@@ -176,6 +193,20 @@ public class MomoMerchant {
             throw new IllegalArgumentException("No Disbursement product available");
         }
         return momoDisbursement.checkRefundStatus(this, httpClient, objectMapper, referenceId);
+    }
+
+    /**
+     * Gets the account balance.
+     *
+     * @return the {@link BalanceResponse}
+     * @throws IllegalArgumentException if the Collections product is not available
+     */
+    public BalanceResponse getAccountBalance() {
+        MomoCollections momoCollections = products.get(MomoCollections.class);
+        if (momoCollections == null) {
+            throw new IllegalArgumentException("No Collections product available");
+        }
+        return momoCollections.getAccountBalance(this, httpClient, objectMapper);
     }
 
 
